@@ -36,7 +36,7 @@ The function $$\theta \mapsto p(x \mid \theta)$$
 is called the **likelihood** of $$\theta$$;
 it's just another name for the density/probability mass of $$x$$
 understood as a function of $$\theta$$ and evaluated
-at $$x$$ assuming data was already observed.
+at $$x$$ assuming that the data was already observed.
 
 Then, inferences about the behavior of $$X$$
 (issues like which values are most likely to occur,
@@ -65,8 +65,8 @@ $$
 
 For most interesting problems, the denominator may be very difficult
 to compute exactly in closed form, or even via numerical methods.
-It's just the normalizing constant that makes $$p(\theta \mid x)$$
-integrate to 1.
+It's just the normalizing constant that guarantees
+that $$p(\theta \mid x)$$ integrates to 1.
 The harshness of obtaining a clear picture of the posterior
 in a given setup (likelihood + prior + data) is a problem of its own.
 
@@ -74,12 +74,14 @@ I just want to emphasize two points:
 
 1. Using probability distributions to model uncertainty about $$\theta$$
 doesn't necessarily mean that the parameter itself has erratic/random behavior.
-Most of the time, what is actually being modeled by
+Most of the time in practice (and everywhere in this post),
+what is actually being modeled by
 these distributions (over the parameter, yes)
 is **my personal knowledge** on the thing rather than the thing itself.
 1. Accordingly, once we believe that the combo prior + likelihood reasonably
-accomodates reality, Bayes' theorem offers the logical foundation upon which
-we rationally adjust our perceptions on $$\theta$$ under new evidence.
+accomodates reality, Bayes' theorem offers the logical
+foundation upon which we should rationally
+adjust our perceptions on $$\theta$$ under new evidence.
 
 The [Monty Hall problem](https://en.wikipedia.org/wiki/Monty_Hall_problem)
 is a good example of that.
@@ -89,7 +91,7 @@ not some kind of frequentist probability.
 It's a matter of incomplete knowledege:
 if you were the one to put the prize there,
 you would know the answer for
-sure (perfect knowledge, no uncertainty).
+sure (perfect knowledge, zero uncertainty).
 
 ## The key idea in Thompson Sampling
 
@@ -120,7 +122,8 @@ Following the Bayesian approach,
 let's denote by $$p_{n,A}(\theta)$$ and $$p_{n,B}(\theta)$$
 the distributions containing our knowledge on
 $$\theta_A$$ and $$\theta_B$$
-after we've learned from $$n \geq 0$$ users.
+after we've learned from the experience of
+the $$n \geq 0$$ first users.
 
 The key idea in Thompson Sampling is:
 any time you need to choose a variation,
@@ -135,12 +138,12 @@ P(\theta_B > \theta_A)
 \right) d\theta_B,
 \end{align}$$
 
-- and then sample B with probability $$P(\theta_B > \theta_A)$$,
-and A otherwise.
+- and then choose B with probability
+$$P(\theta_B > \theta_A)$$.
 
 That's very intuitive:
 considering all you know at the time,
-sample version B as often as you believe
+sample version B (or A) as often as you believe
 that it's more likely to yield a positive outcome.
 
 ## Updating priors
@@ -157,7 +160,7 @@ $$
 
 That means we believe that pretty much anything can happen in both scenarios.
 There may be better choices; if you think about it,
-that's indeed a very strong assumption, but follow along for now.
+that implies very strong assumptions, but follow along for now.
 
 This way, $$P(\theta_B > \theta_A) = 0.5$$ and A and B
 are equally likely to be chosen.
@@ -166,7 +169,7 @@ Let's say that we saw the experience of the first
 $$n = n_A + n_B$$ users and
 
 - $$n_A$$ of them happened to be exposed to A,
-with $$s_A$$ successes, or positive outcomes;
+with $$s_A$$ positive outcomes, or successes;
 - same thing for B, with $$n_B$$ and $$s_B$$.
 
 For each group, these results can be seen as
@@ -310,3 +313,143 @@ I've used the fact that the inner integral is just the
 function](https://en.wikipedia.org/wiki/Cumulative_distribution_function).
 
 ## Simulations
+
+The code to reproduce the analysis in this section is available
+[here](https://github.com/abelborges/abelborges.github.io/tree/master/code/thompson-sampling).
+
+Simulations are useful to assess the behavior
+of probabilistic methods under as many
+hypothetical scenarios as we want.
+We're going to focus on the following questions
+of practical relevance:
+
+1. When to stop the experiment?
+1. How to estimate the lift $$\Delta = \theta_B - \theta_A$$?
+
+Intuitively, I want to stop as soon as I'm
+convinced by evidence that $$\Delta \neq 0$$.
+
+More specifically,
+the knowledge distributions for $$\theta_A$$
+and $$\theta_B$$ imply a knowledge distribution
+for $$\Delta$$, say $$p_n(\Delta)$$.
+At any time, we can deduce
+[credible intervals](https://en.wikipedia.org/wiki/Credible_interval)
+for $$\Delta$$ from $$p_n(\Delta)$$.
+Here, I take the mean as the point estimate
+and the credible interval defined
+by the percentiles 10 and 90
+(i.e. a 80% credible interval)
+as the uncertainty estimate.
+Therefore, the answers for both questions
+can be merged into one single stopping rule like
+
+- Stop as soon as the credible interval for $$\Delta$$
+doesn't contain 0 anymore, or
+- Stop as soon as the width of the credible interval
+for $$\Delta$$ becomes less than a threshold.
+
+On the other hand, we can assess the quality of such decisions
+by checking how often the timing matches
+
+The scenarios we may encounter can be defined essentially
+in terms of $$\theta$$.
+The cross product of
+
+1. The baseline rate of positive outcomes $$\theta_A$$
+   being 1% or 10%; and
+1. The relative lift $$\Delta/\theta_A$$
+   being 0%, 5% or 10%.
+
+amounts to 6 scenarios and these are the ones
+I consider here.
+
+Now to the simulation. The
+[generative model](https://en.wikipedia.org/wiki/Generative_model)
+of our problem looks like this:
+
+- Start with uniform priors, i.e.
+$$\alpha_A = \beta_A = \alpha_B = \beta_B = 1$$;
+- For each new user $$n \geq 1$$:
+  - **Thompson Sampling**: Compute
+    $$P(\theta_B > \theta_A)$$
+    and sample the variation based on it;
+  - Sample the (binary) user outcome using
+    $$\theta_A$$ or $$\theta_B$$,
+    depending on the previous step,
+    and update the hyper-parameters,
+    increasing $$\alpha$$ or $$\beta$$ in 1
+    depending on whether the experience was
+    positive or negative, respectively.
+
+Notice that I'm updating the distributions
+right after observing the outcome
+of each user. In practice, that may not
+be feasible. Updates could be executed
+after counting results for batches of users.
+
+I've used a total of 10K users and repeated this whole
+process 100 times, resulting in 1M simulated user experiences.
+For each scenario we can now visualize
+the average (dense line) + 80% confidence intervals (shadows)
+of the $$P(\theta_B > \theta_A)$$
+values across the 100 histories as a function
+of the number of users, $$n$$.
+
+![]({{site.baseurl}}/images/thompson-sampling/simple-scenarios.png)
+
+First few notes:
+
+- For the same relative lift, it's easier to
+detect an existing difference if the rates
+are bigger. That's just because the absolute value
+of the lift is also bigger in this case.
+- To compare absolute lifts
+
+Amunsingly, this is a
+[frequentist](https://en.wikipedia.org/wiki/Probability_interpretations#Frequentism)
+analysis of subjective probabilities.
+These are not bayesian estimates.
+We're assessing in a simple manner how our
+perception of the reality at a certain point
+in time may deviate from the actual
+underlying reality itself.
+
+## The impact of better priors
+
+
+
+## More realistic scenarios
+
+[This](https://medium.com/pinterest-engineering/trapped-in-the-present-how-engagement-bias-in-short-run-experiments-can-blind-you-to-long-run-58b55ad3bda0)
+post on the Pinterest engineering blog
+hightlight a very important issue they call "engagement bias"
+
+> [...] engagement bias: your treatment doesn’t have the
+same effect on unengaged users as it does on engaged users,
+but the engaged users are the ones who show up first and
+therefore dominate the early experiment results.
+If you trust the short-term results without accounting for and
+trying to mitigate this bias, you risk being trapped in the present:
+building a product for the users you’ve already activated
+instead of the users you want to activate in the future.
+
+That's specially undesirable in case you're targeting new users.
+How can we take it into account?
+
+The boring solution is just to wait longer so that we can be more confident.
+But we have no time for that, we've got many other theories to test.
+I'm interested in how we may be able to catch such
+behavior early on in the experiment.
+Let's accomodate the possibility of engagement bias into
+our knowledge model so that we're not fooled by it.
+What we are about to do is called
+[hierarchical modeling](https://en.wikipedia.org/wiki/Bayesian_hierarchical_modeling).
+
+The idea is to 
+
+
+
+
+
+
