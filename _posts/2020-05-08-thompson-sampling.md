@@ -310,7 +310,7 @@ prob_B_is_better = function(alpha_a, beta_a, alpha_b, beta_b) {
 
 I've used the fact that the inner integral is just the
 [cumulative distribution
-function](https://en.wikipedia.org/wiki/Cumulative_distribution_function).
+function (CDF)](https://en.wikipedia.org/wiki/Cumulative_distribution_function).
 
 ## Simulations
 
@@ -326,94 +326,214 @@ of practical relevance:
 1. When to stop the experiment?
 1. How to estimate the lift $$\Delta = \theta_B - \theta_A$$?
 
-Intuitively, I want to stop as soon as I'm
-convinced by evidence that $$\Delta \neq 0$$.
+Well, I want to stop as soon as I'm
+convinced by evidence that $$\Delta$$ is probably not zero.
 
 More specifically,
 the knowledge distributions for $$\theta_A$$
 and $$\theta_B$$ imply a knowledge distribution
 for $$\Delta$$, say $$p_n(\Delta)$$.
-At any time, we can deduce
+Then, at any time, we can deduce
 [credible intervals](https://en.wikipedia.org/wiki/Credible_interval)
-for $$\Delta$$ from $$p_n(\Delta)$$.
-Here, I take the mean as the point estimate
-and the credible interval defined
-by the percentiles 10 and 90
-(i.e. a 80% credible interval)
-as the uncertainty estimate.
-Therefore, the answers for both questions
-can be merged into one single stopping rule like
+for $$\Delta$$.
+Here, I take the mean as the point estimate.
+For the uncertainty estimate, the credible intervals,
+the most common options are:
 
-- Stop as soon as the credible interval for $$\Delta$$
-doesn't contain 0 anymore, or
-- Stop as soon as the width of the credible interval
-for $$\Delta$$ becomes less than a threshold.
+- The so-called equal-tailed interval (ETI)
+is defined by the quantiles
+$$\alpha/2$$ and $$1-\alpha/2$$
+for a $$100\alpha\%$$ credible interval
+(e.g. if $$\alpha=80\%$$, then we use percentiles 10 and 90);
+- The
+[Highest Density Region (HDR)](https://www.webpages.uidaho.edu/~stevel/517/Computing%20and%20Graphing%20HDR.pdf),
+the subset of the support of a distribution
+that accumulates a specified probability mass,
+say $$\alpha$$,
+*and* have the highest possible values
+of the density function.
 
-On the other hand, we can assess the quality of such decisions
-by checking how often the timing matches
+The ETI equals the HDR in case the distribution is
+symmetric and unimodal.
+For skewed distributions, as is our case,
+the ETI may let values near the mode out of the interval
+while including values with lower associated density,
+and I want to avoid that property.
+The HDR certainly contains the mode,
+which is unique and very close to the mean in our case,
+so I'm going to use it.
 
-The scenarios we may encounter can be defined essentially
+In any case, the answers for questions 1 and 2
+can be merged into a single stopping rule like
+*"Stop as soon as the credible interval for $$\Delta$$
+doesn't contain 0"*,
+or
+*"Stop as soon as the width of the credible interval
+for $$\Delta$$ becomes less than a threshold"*,
+or a combination of these.
+
+The scenarios we may face can be defined essentially
 in terms of $$\theta$$.
 The cross product of
 
-1. The baseline rate of positive outcomes $$\theta_A$$
-   being 1% or 10%; and
-1. The relative lift $$\Delta/\theta_A$$
-   being 0%, 5% or 10%.
+- The baseline rate of positive outcomes $$\theta_A$$
+  being 1%, 5% or 10%; and
+- The relative lift $$\Delta/\theta_A$$
+  being 0%, 10% or 100%.
 
-amounts to 6 scenarios and these are the ones
+amounts to 9 scenarios and these are the ones
 I consider here.
 
-Now to the simulation. The
+**Now to the simulation.**
+First, I want to understand how
+$$P(\Delta > 0) = P(\theta_B > \theta_A)$$
+behaves under different conditions.
+The
 [generative model](https://en.wikipedia.org/wiki/Generative_model)
-of our problem looks like this:
+for user outcomes and the algorithm
+we devised in the previous section put together
+look like the following.
+We start with uniform priors, i.e.
+$$\alpha_A = \beta_A = \alpha_B = \beta_B = 1$$.
+Then, for each new user $$n \geq 1$$:
 
-- Start with uniform priors, i.e.
-$$\alpha_A = \beta_A = \alpha_B = \beta_B = 1$$;
-- For each new user $$n \geq 1$$:
-  - **Thompson Sampling**: Compute
-    $$P(\theta_B > \theta_A)$$
-    and sample the variation based on it;
-  - Sample the (binary) user outcome using
-    $$\theta_A$$ or $$\theta_B$$,
-    depending on the previous step,
-    and update the hyper-parameters,
-    increasing $$\alpha$$ or $$\beta$$ in 1
-    depending on whether the experience was
-    positive or negative, respectively.
+1. *Thompson Sampling*: Compute
+   $$P(\theta_B > \theta_A)$$
+   and sample the variation based on it;
+1. Sample the (binary) user outcome using
+   $$\theta_A$$ or $$\theta_B$$,
+   depending on the previous step;
+1. Update the hyper-parameters of the sampled variation,
+   increasing $$\alpha$$ or $$\beta$$ in 1
+   depending on whether the experience was
+   positive or negative, respectively.
 
 Notice that I'm updating the distributions
 right after observing the outcome
 of each user. In practice, that may not
 be feasible. Updates could be executed
-after counting results for batches of users.
+after counting results from batches of users.
 
 I've used a total of 10K users and repeated this whole
-process 100 times, resulting in 1M simulated user experiences.
-For each scenario we can now visualize
-the average (dense line) + 80% confidence intervals (shadows)
-of the $$P(\theta_B > \theta_A)$$
+process 100 times, resulting in 1M simulated user experiences
+for each scenario.
+Now, we can visualize, say,
+the average (dense line) + 80% ETI (shadows)
+of the $$P(\Delta > 0)$$
 values across the 100 histories as a function
-of the number of users, $$n$$.
+of the number of users, $$n$$,
+for each scenario.
 
-![]({{site.baseurl}}/images/thompson-sampling/simple-scenarios.png)
-
-First few notes:
-
-- For the same relative lift, it's easier to
-detect an existing difference if the rates
-are bigger. That's just because the absolute value
-of the lift is also bigger in this case.
-- To compare absolute lifts
-
-Amunsingly, this is a
+> Amusingly, this is a
 [frequentist](https://en.wikipedia.org/wiki/Probability_interpretations#Frequentism)
 analysis of subjective probabilities.
-These are not bayesian estimates.
-We're assessing in a simple manner how our
+Note that these are not bayesian estimates.
+The uncertainty measured by these intervals
+are with respect to the unobserved, alternative histories
+that are possible according to our generative model.
+I want to assess in a simple manner how my
 perception of the reality at a certain point
 in time may deviate from the actual
 underlying reality itself.
+In a minute, we're going to take a closer look
+into the knowledge distribution for $$\Delta$$,
+which is the only thing we have in practice
+to both (1) measure uncertainty and (2) make decisions.
+
+![]({{site.baseurl}}/images/thompson-sampling/simple-scenarios.png)
+
+- As expected, the greater the lift the easier to catch
+the difference sooner;
+- For a fixed (relative) lift, it's easier to
+detect an existing difference if the rates
+are bigger. That's just because the absolute value
+of the lift, $$\theta_B - \theta_A$$, is also bigger in such cases.
+- Under no lift, it looks like the $$P(\theta_B > \theta_A)$$
+time series may drift up and down with no signs of convergence.
+Notice the wide confidence intervals irrespectively of $$\theta_A$$ and $$n$$.
+- Both the green curve in the first pane and
+the blue curve in the third pane correspond to $$\Delta = 0.01$$:
+notice the difference in how easy it is to catch the lift.
+
+**Now let's move to the distribution of $$\Delta$$**.
+Since $$\Delta = \theta_B - \theta_A$$, we have
+
+$$\begin{align}
+p_n(\Delta)
+&= \int_0^1 p_{n,B}(\Delta + \theta) p_{n,A}(\theta) d\theta \\
+&= \frac{\int_0^1 (\Delta+\theta)^{\alpha_B-1} (1-\Delta-\theta)^{\beta_B-1}
+\theta^{\alpha_A-1} (1-\theta)^{\beta_A - 1} d\theta}
+{B(\alpha_A, \beta_A) B(\alpha_B, \beta_B)}.
+\end{align}$$
+
+You can check the closed form solution to the integral
+[here](https://www.terrapub.co.jp/journals/jjss/pdf/4002/40020265.pdf).
+It depends on the
+[Appell hypergeometric function](https://en.wikipedia.org/wiki/Appell_series)
+$$F_3$$, and it's kinda hard to compute it.
+Since I didn't find code to do so,
+I'll resort to numerically dealing with the above expression.
+
+In the simulations, I record the most up-to-date values of
+the hyper-parameters (`universe` counts the 100
+replications and `b_is_better` is $$P(\Delta > 0)$$):
+
+```
+# A tibble: 9,000,000 x 9
+   theta_a theta_b universe nth_user b_is_better alpha_a beta_a alpha_b beta_b
+     <dbl>   <dbl>    <int>    <int>       <dbl>   <int>  <int>   <int>  <int>
+ 1     0.1     0.1        1        1       0.5         1      1       2      1
+ 2     0.1     0.1        1        2       0.667       1      1       2      2
+ 3     0.1     0.1        1        3       0.5         1      2       2      2
+ 4     0.1     0.1        1        4       0.7         1      3       2      2
+ 5     0.1     0.1        1        5       0.8         1      3       3      2
+ 6     0.1     0.1        1        6       0.886       1      4       3      2
+ 7     0.1     0.1        1        7       0.929       1      5       3      2
+ 8     0.1     0.1        1        8       0.952       1      5       3      3
+ 9     0.1     0.1        1        9       0.917       1      5       3      4
+10     0.1     0.1        1       10       0.879       1      5       4      4
+# … with 8,999,990 more rows
+```
+
+I discovered
+[here](https://stackoverflow.com/a/42987104/6152355)
+a piece of code from
+[this](https://sites.google.com/site/doingbayesiandataanalysis/software-installation)
+book to compute the HDRs for single mode distributions (our case)
+given a quantile function (the inverse of the CDF) and $$\alpha$$,
+the probability of the credible interval.
+The CDF of $$\Delta$$
+(remark the support of $$\Delta$$ is $$(-1,1)$$)
+is
+
+$$
+\Delta \mapsto \int_{-1}^\Delta p_n(t) dt
+$$
+
+and since we know it's monotonically non-decreasing
+we can easily compute its
+[inverse](https://stackoverflow.com/a/10081571/6152355)
+on-demand via standard root-finding numerical methods,
+like Newton's. Here's some R code to do that:
+
+```r
+delta_pdf = function(d, alpha_a, beta_a, alpha_b, beta_b) {
+  integrate(function(theta) {
+    dbeta(d + theta, alpha_b, beta_b) * dbeta(theta, alpha_a, beta_a)
+  }, lower = 0, upper = 1)$value
+}
+
+delta_cdf = function(d, alpha_a, beta_a, alpha_b, beta_b) {
+  integrate(Vectorize(delta_pdf), lower = -1, upper = d,
+            alpha_a = alpha_a, beta_a = beta_a,
+            alpha_b = alpha_b, beta_b = beta_b)$value
+}
+
+delta_icdf = function(p, alpha_a, beta_a, alpha_b, beta_b) {
+  uniroot(function(d) delta_cdf(d, alpha_a, beta_a, alpha_b, beta_b) - p,
+          interval = c(-1, 1))$root
+}
+```
 
 ## The impact of better priors
 

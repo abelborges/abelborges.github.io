@@ -18,7 +18,7 @@ List simulate(
   NumericVector p_B(users), aa(users), ba(users), ab(users), bb(users);
   aa[0] = alpha_a;
   ba[0] = beta_a;
-  ba[0] = alpha_b;
+  ab[0] = alpha_b;
   bb[0] = beta_b;
   bool is_positive_outcome = true;
   NumericVector u1 = runif(users), u2 = runif(users);
@@ -36,20 +36,20 @@ List simulate(
     }
     aa[i] = alpha_a;
     ba[i] = beta_a;
-    ba[i] = alpha_b;
+    ab[i] = alpha_b;
     bb[i] = beta_b;
   }
   
   return List::create(
+    Named("theta_a") = theta_a,
+    Named("theta_b") = theta_b,
     Named("universe") = universe,
     Named("nth_user") = seq(1, users),
     Named("b_is_better") = p_B,
     Named("alpha_a") = aa,
     Named("beta_a") = ba,
     Named("alpha_b") = ab,
-    Named("beta_b") = bb,
-    Named("theta_a") = theta_a,
-    Named("theta_b") = theta_b
+    Named("beta_b") = bb
   );
 }
 
