@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "A fairly comprehensive introduction to online experiments with Thompson Sampling"
+title: "Introduction to online experiments with Thompson Sampling"
 excerpt: >
   We're going to release a new feature in a product.
   It consists of a modified version B of a currently functional component A.
@@ -33,12 +33,12 @@ distribution $$p(x \mid \theta)$$,
 parametrized by a vector $$\theta$$
 that takes values from a set $$\Theta$$ (of, say, real vectors).
 The function $$\theta \mapsto p(x \mid \theta)$$
-is called the **likelihood** of $$\theta$$;
-it's just another name for the density/probability mass of $$x$$
-understood as a function of $$\theta$$ and evaluated
-at $$x$$ assuming that the data was already observed.
+is called the **likelihood** of $$\theta$$.
+It's just another name for the density/probability mass of $$x$$
+now seen as a function of $$\theta$$, given a
+particular data point $$x$$.
 
-Then, inferences about the behavior of $$X$$
+In this setup, inferences about the behavior of $$X$$
 (issues like which values are most likely to occur,
 how frequently the values lie on a given interval, and so on)
 can be translated into inferences about $$\theta$$,
@@ -83,7 +83,7 @@ accomodates reality, Bayes' theorem offers the logical
 foundation upon which we should rationally
 adjust our perceptions on $$\theta$$ under new evidence.
 
-The [Monty Hall problem](https://en.wikipedia.org/wiki/Monty_Hall_problem)
+<!-- The [Monty Hall problem](https://en.wikipedia.org/wiki/Monty_Hall_problem)
 is a good example of that.
 Bear in mind when thinking about it that
 the player's point of view is the subject of the model,
@@ -91,12 +91,12 @@ not some kind of frequentist probability.
 It's a matter of incomplete knowledege:
 if you were the one to put the prize there,
 you would know the answer for
-sure (perfect knowledge, zero uncertainty).
+sure (perfect knowledge, zero uncertainty). -->
 
 ## The key idea in Thompson Sampling
 
 Each time an user enters the app,
-we randomly choose a version of the app (here, A or B)
+we randomly choose between A and B
 and observe either a positive or a negative outcome.
 Here I only treat the case of binary outcomes,
 but the overall rationale is useful for continuous measurements
@@ -104,7 +104,7 @@ as well (e.g. how much money was spent).
 
 If we assume that the outcomes of different users don't depend on each other
 and, for simplicity, that each user $$i$$ has only 1 outcome,
-the outcomes of each group of users (A and B)
+the outcomes of each group of users
 can be seen as samples from Bernoulli distributions with parameters
 
 $$
@@ -123,7 +123,7 @@ let's denote by $$p_{n,A}(\theta)$$ and $$p_{n,B}(\theta)$$
 the distributions containing our knowledge on
 $$\theta_A$$ and $$\theta_B$$
 after we've learned from the experience of
-the $$n \geq 0$$ first users.
+the $$n \geq 0$$ first visitors.
 
 The key idea in Thompson Sampling is:
 any time you need to choose a variation,
@@ -148,39 +148,42 @@ that it's more likely to yield a positive outcome.
 
 ## Updating priors
 
-Now let's look into how to adapt our priors,
+Now let's look into how to set and adapt our priors,
 or how to acquire knowledge, if you like.
 
+**The prior.**
 If we start at $$n=0$$ with no predilections,
-then we may assign a uniform (flat) prior for both A and B:
+then we may assign a uniform prior for A and B:
 
 $$
 p_{0,A}(\theta) = p_{0,B}(\theta) = 1, \quad \theta \in (0,1).
 $$
 
-That means we believe that pretty much anything can happen in both scenarios.
-There may be better choices; if you think about it,
-that implies very strong assumptions, but follow along for now.
+That means we believe that pretty much anything
+can happen in both scenarios.
+There may be better choices, but let's move on for now.
 
-This way, $$P(\theta_B > \theta_A) = 0.5$$ and A and B
+This way, at the beginning,
+$$P(\theta_B > \theta_A) = 0.5$$ and A and B
 are equally likely to be chosen.
 
 Let's say that we saw the experience of the first
-$$n = n_A + n_B$$ users and
-
-- $$n_A$$ of them happened to be exposed to A,
+$$n = n_A + n_B$$ users, with
+$$n_A$$ of them happened to be exposed to A,
 with $$s_A$$ positive outcomes, or successes;
-- same thing for B, with $$n_B$$ and $$s_B$$.
+same thing for B, with $$n_B$$ and $$s_B$$.
 
+**The posterior.**
 For each group, these results can be seen as
 [Binomial](https://en.wikipedia.org/wiki/Binomial_distribution)
-experiments, since they are the sum of many Bernoulli experiments.
+experiments, since they are the sum of many independent
+Bernoulli experiments.
 For A, and analogously for B, the posterior is
 
 $$\begin{align}
 p_{n,A}(\theta \mid s_A, n_A)
 &\propto \text{likelihood} \times \text{prior} \\
-&= P\left(\mathrm{Bin}(n_A, \theta) = s_A\right) \times p_{0,A}(\theta) \\
+&= P\left\{\mathrm{Bin}(n_A, \theta) = s_A\right\} \times p_{0,A}(\theta) \\
 &= {n_A \choose s_A} \theta^{s_A} (1-\theta)^{n_A - s_A} \times 1 \\
 &\propto \theta^{s_A} (1-\theta)^{n_A - s_A}.
 \end{align}$$
@@ -213,21 +216,23 @@ as the posterior:
 
 $$\begin{align}
 p_{n,A}(\theta \mid s_A, n_A)
-&= \frac{\theta^{\alpha_A - 1} (1-\theta)^{\beta_A - 1}}{B(\alpha_A, \beta_A)} \\
-&= \frac{\Gamma(\alpha_A + \beta_A)}{\Gamma(\alpha_A) \Gamma(\beta_A)}
-\theta^{\alpha_A - 1} (1-\theta)^{\beta_A - 1},
+&= \frac{\theta^{\alpha_A - 1} (1-\theta)^{\beta_A - 1}}{B(\alpha_A, \beta_A)}.
 \end{align}$$
 
-where $$\Gamma$$ is the [Gamma function](https://en.wikipedia.org/wiki/Beta_function),
+<!-- &= \frac{\Gamma(\alpha_A + \beta_A)}{\Gamma(\alpha_A) \Gamma(\beta_A)}
+\theta^{\alpha_A - 1} (1-\theta)^{\beta_A - 1},
+ -->
+
+<!-- where $$\Gamma$$ is the [Gamma function](https://en.wikipedia.org/wiki/Beta_function),
 which can be used to express the Beta function.
 Using the fact that $$\Gamma(x) = (x-1)!$$ when $$x$$ is integer,
 we see that this is indeed the same normalizing constant as
-the one computed in the previous equation.
+the one computed in the previous equation. -->
 
 **What did we learn?**
 We saw that the well-known Beta distribution arises *naturally*
 (i.e., as a logical necessity) as the bayesian posterior
-under a Uniform prior + a Binomial likelihood!
+under a Uniform prior + a Binomial likelihood.
 As you may already know, the Uniform is a special case
 of the Beta distribution when $$\alpha = \beta = 1$$.
 That is: both the prior and the posterior for $$\theta$$
@@ -235,11 +240,11 @@ are Beta distributions under the Binomial likelihood
 in which $$\theta$$ is the probability of a positive outcome.
 In that case, we say that the Beta distribution is a
 [conjugate prior](https://en.wikipedia.org/wiki/Conjugate_prior)
-for the Binomial likelihood: when we update it with new data
-following the Bayes law, we stay in the same parametric
-family of distributions.
+for the Binomial likelihood: when we "Bayes-update" it with new data,
+we stay in the same parametric family of distributions.
 
-If we repeat this process, we obtain the formula that we need
+**Continuously updating.**
+If we repeat this process, we obtain a formula
 to implement all of this.
 Let's say now that
 $$m = m_A + m_B$$ additional users came
@@ -253,16 +258,14 @@ p_{n+m,A}(\theta \mid s_A, n_A, t_A, m_A)
 \times p_{n,A}(\theta \mid s_A, n_A) \\
 &\propto \theta^{t_A} (1-\theta)^{m_A - t_A}
 \times \theta^{s_A} (1-\theta)^{n_A - s_A} \\
-&= \theta^{s_A + t_A} (1-\theta)^{(n_A + m_A) - (s_A + t_A)},
+&= \theta^{s_A + t_A} (1-\theta)^{(n_A + m_A) - (s_A + t_A)}.
 \end{align}$$
 
-which is just a Beta distribution with parameters
+Now we know that this is just a Beta distribution with parameters
 $$\alpha_A = s_A + t_A + 1$$ and $$\beta_A = (n_A + m_A) - (s_A + t_A) + 1$$.
-Notice that's the same as waiting
-for the results of all $$n+m$$ users,
-given that we observe the same shares between A and B and
-the same user outcomes within each version,
-which would not be equally likely to occur in case we have updated earlier.
+Note that the mechanics of the formulae for two updates
+is equivalent to performing a single update
+after waiting for the results of all $$n+m$$ users.
 It's hopefully clear that the updates for A and B have the form
 
 $$\begin{align}
@@ -270,22 +273,22 @@ $$\begin{align}
 \beta &\leftarrow \beta + \text{new failures since last update}
 \end{align}$$
 
-**Interpretation of the hyper-parameters.** That makes clear that $$\alpha$$ counts
+**Interpretation of the hyper-parameters.**
+That makes clear that $$\alpha$$ counts
 successes and $$\beta$$ counts failures.
-Also:
+Also, remember that
 
 - The mean of the Beta distribution is $$\alpha/(\alpha + \beta)$$;
 - The mode, which exists if $$\alpha,\beta > 1$$ (always true after the first update
 if we start at the Uniform), is $$(\alpha-1)/(\alpha+\beta-2)$$.
 
-After we've seen sufficiently many users, both the mean and the mode
-are very close to the
-proportion of positive outcomes (in each version A/B),
-which is a nice property.
+Note that after the first tens of users,
+both the mean and the mode become very close to the
+proportion of positive outcomes observed so far.
 
 **Randomization rule.** Finally, one can
 [show](https://www.evanmiller.org/bayesian-ab-testing.html#binary_ab_derivation)
-that, four our case,
+that, four this Beta case,
 
 $$
 P(\theta_B > \theta_A) =
@@ -302,9 +305,10 @@ of $$P(\theta_B > \theta_A)$$ introduced before for Beta distributions:
 
 ```r
 prob_B_is_better = function(alpha_a, beta_a, alpha_b, beta_b) {
-  integrate(function(theta) {
+  integrand = function(theta) {
     dbeta(theta, alpha_b, beta_b) * pbeta(theta, alpha_a, beta_a)
-  }, lower = 0, upper = 1)$value
+  }
+  integrate(integrand, lower = 0, upper = 1)$value
 }
 ```
 
@@ -312,44 +316,46 @@ I've used the fact that the inner integral is just the
 [cumulative distribution
 function (CDF)](https://en.wikipedia.org/wiki/Cumulative_distribution_function).
 
-## Simulations
-
-The code to reproduce the analysis in this section is available
-[here](https://github.com/abelborges/abelborges.github.io/tree/master/code/thompson-sampling).
+## Simulate!
 
 Simulations are useful to assess the behavior
 of probabilistic methods under as many
 hypothetical scenarios as we want.
-We're going to focus on the following questions
+The code to reproduce the analysis in this section is available
+[here](https://github.com/abelborges/abelborges.github.io/tree/master/code/thompson-sampling).
+
+**Questions of interest.**
+We're going to focus on the following related questions
 of practical relevance:
 
 1. When to stop the experiment?
-1. How to estimate the lift $$\Delta = \theta_B - \theta_A$$?
+1. How to provide an estimate of
+the "lift" $$\Delta = \theta_B - \theta_A$$?
 
-Well, I want to stop as soon as I'm
-convinced by evidence that $$\Delta$$ is probably not zero.
+They are related because intuition suggests
+that we should stop as soon as there is "enough evidence"
+in favor of $$\Delta$$ being different than zero.
 
-More specifically,
-the knowledge distributions for $$\theta_A$$
+The knowledge distributions for $$\theta_A$$
 and $$\theta_B$$ imply a knowledge distribution
 for $$\Delta$$, say $$p_n(\Delta)$$.
-Then, at any time, we can deduce
+Then, at any time, we can compute
+properties of the distribution of $$\Delta$$.
+For a point estimate, I'll use the mean here.
+For uncertainty estimates, the most common options for
 [credible intervals](https://en.wikipedia.org/wiki/Credible_interval)
-for $$\Delta$$.
-Here, I take the mean as the point estimate.
-For the uncertainty estimate, the credible intervals,
-the most common options are:
+are:
 
 - The so-called equal-tailed interval (ETI)
 is defined by the quantiles
-$$\alpha/2$$ and $$1-\alpha/2$$
-for a $$100\alpha\%$$ credible interval
-(e.g. if $$\alpha=80\%$$, then we use percentiles 10 and 90);
+$$c/2$$ and $$1-c/2$$
+for a $$100c\%$$ credible interval
+(e.g. if $$c=80\%$$, then we use percentiles 10 and 90);
 - The
 [Highest Density Region (HDR)](https://www.webpages.uidaho.edu/~stevel/517/Computing%20and%20Graphing%20HDR.pdf),
 the subset of the support of a distribution
 that accumulates a specified probability mass,
-say $$\alpha$$,
+say $$c$$,
 *and* have the highest possible values
 of the density function.
 
@@ -365,46 +371,59 @@ so I'm going to use it.
 
 In any case, the answers for questions 1 and 2
 can be merged into a single stopping rule like
-*"Stop as soon as the credible interval for $$\Delta$$
-doesn't contain 0"*,
-or
-*"Stop as soon as the width of the credible interval
-for $$\Delta$$ becomes less than a threshold"*,
-or a combination of these.
+
+1. Stop as soon as the credible interval for $$\Delta$$
+doesn't contain 0, given a high-enough credibility level;
+1. Stop as soon as the width ("margin of error", if you like)
+of the credible interval
+for $$\Delta$$ becomes less than a threshold;
+1. Stop as soon as the probability of $$\Delta$$
+changing sign at some future moment becomes low enough.
+
+I confess I don't know whether this third stopping rule is
+used in practice, but I find it the most compelling one.
+However, I don't know how to compute it here.
+Maybe we get back to that another time.
+It's simpler to choose from the first two,
+or some combination of them.
 
 The scenarios we may face can be defined essentially
 in terms of $$\theta$$.
-The cross product of
+Here I consider two dimensions:
 
 - The baseline rate of positive outcomes $$\theta_A$$
   being 1%, 5% or 10%; and
 - The relative lift $$\Delta/\theta_A$$
-  being 0%, 10% or 100%.
+  being 0%, 10% or 100%,
 
-amounts to 9 scenarios and these are the ones
-I consider here.
+which amounts to 9 scenarios.
 
 **Now to the simulation.**
-First, I want to understand how
+The goal here is to get a basic understanding of how
+
 $$P(\Delta > 0) = P(\theta_B > \theta_A)$$
-behaves under different conditions.
+
+evolves under different conditions.
 The
 [generative model](https://en.wikipedia.org/wiki/Generative_model)
 for user outcomes and the algorithm
 we devised in the previous section put together
 look like the following.
+
+First, we set the "true" values of $$\theta_A$$
+and $$\theta_B$$.
 We start with uniform priors, i.e.
 $$\alpha_A = \beta_A = \alpha_B = \beta_B = 1$$.
 Then, for each new user $$n \geq 1$$:
 
 1. *Thompson Sampling*: Compute
    $$P(\theta_B > \theta_A)$$
-   and sample the variation based on it;
+   and use it to sample a variation;
 1. Sample the (binary) user outcome using
    $$\theta_A$$ or $$\theta_B$$,
    depending on the previous step;
 1. Update the hyper-parameters of the sampled variation,
-   increasing $$\alpha$$ or $$\beta$$ in 1
+   increasing either $$\alpha$$ or $$\beta$$ in 1
    depending on whether the experience was
    positive or negative, respectively.
 
@@ -412,7 +431,7 @@ Notice that I'm updating the distributions
 right after observing the outcome
 of each user. In practice, that may not
 be feasible. Updates could be executed
-after counting results from batches of users.
+after summarizing results from batches of users.
 
 I've used a total of 10K users and repeated this whole
 process 100 times, resulting in 1M simulated user experiences
@@ -424,56 +443,140 @@ values across the 100 histories as a function
 of the number of users, $$n$$,
 for each scenario.
 
-> Amusingly, this is a
-[frequentist](https://en.wikipedia.org/wiki/Probability_interpretations#Frequentism)
-analysis of subjective probabilities.
-Note that these are not bayesian estimates.
-The uncertainty measured by these intervals
-are with respect to the unobserved, alternative histories
-that are possible according to our generative model.
-I want to assess in a simple manner how my
-perception of the reality at a certain point
-in time may deviate from the actual
-underlying reality itself.
-In a minute, we're going to take a closer look
-into the knowledge distribution for $$\Delta$$,
-which is the only thing we have in practice
-to both (1) measure uncertainty and (2) make decisions.
-
 ![]({{site.baseurl}}/images/thompson-sampling/simple-scenarios.png)
 
 - As expected, the greater the lift the easier to catch
 the difference sooner;
-- For a fixed (relative) lift, it's easier to
+- For a given relative lift, it's easier to
 detect an existing difference if the rates
 are bigger. That's just because the absolute value
-of the lift, $$\theta_B - \theta_A$$, is also bigger in such cases.
-- Under no lift, it looks like the $$P(\theta_B > \theta_A)$$
+of the lift is also bigger in such cases.
+For instance, both the green
+curve in the first pane and
+the blue curve in the third pane correspond to $$\Delta = 0.01$$.
+- Under no lift, also as expected,
+it looks like the $$P(\theta_B > \theta_A)$$
 time series may drift up and down with no signs of convergence.
 Notice the wide confidence intervals irrespectively of $$\theta_A$$ and $$n$$.
-- Both the green curve in the first pane and
-the blue curve in the third pane correspond to $$\Delta = 0.01$$:
-notice the difference in how easy it is to catch the lift.
 
-**Now let's move to the distribution of $$\Delta$$**.
+Amusingly, this is a
+[frequentist](https://en.wikipedia.org/wiki/Probability_interpretations#Frequentism)
+analysis of subjective probabilities.
+<!-- Note that these are not bayesian estimates. -->
+The uncertainty measured by these intervals
+are with respect to the
+[ensemble](https://en.wikipedia.org/wiki/Statistical_ensemble_(mathematical_physics))
+of alternative histories
+that are possible according to the combination of the
+assumed generative model (what nature yields)
+and chosen experiment strategy (our reaction to it).
+I wanted to assess in a simple manner how my
+perception of the reality at a certain point
+in time may deviate from the actual
+underlying reality itself.
+In other words, I don't want to be fooled by randomness.
+In practice, the knowledge distribution for $$\Delta$$
+is the only thing we have to
+measure uncertainty and make decisions accordingly.
+
+**A closer look into the distribution of $$\Delta$$**.
+We want to deduce HDRs for $$\Delta$$,
+use them to decide when to stop and then measure the
+quality of such decisions.
 Since $$\Delta = \theta_B - \theta_A$$, we have
 
 $$\begin{align}
 p_n(\Delta)
-&= \int_0^1 p_{n,B}(\Delta + \theta) p_{n,A}(\theta) d\theta \\
-&= \frac{\int_0^1 (\Delta+\theta)^{\alpha_B-1} (1-\Delta-\theta)^{\beta_B-1}
-\theta^{\alpha_A-1} (1-\theta)^{\beta_A - 1} d\theta}
-{B(\alpha_A, \beta_A) B(\alpha_B, \beta_B)}.
+&= \int_0^1 p_{n,B}(\Delta + \theta) p_{n,A}(\theta) d\theta
 \end{align}$$
 
-You can check the closed form solution to the integral
-[here](https://www.terrapub.co.jp/journals/jjss/pdf/4002/40020265.pdf).
+whose solution can be found in Theorem 1 of
+[this](https://www.terrapub.co.jp/journals/jjss/pdf/4002/40020265.pdf)
+paper.
 It depends on the
 [Appell hypergeometric function](https://en.wikipedia.org/wiki/Appell_series)
-$$F_3$$, and it's kinda hard to compute it.
-Since I didn't find code to do so,
-I'll resort to numerically dealing with the above expression.
+$$F_3$$.
+[Here](http://mpmath.org/doc/current/functions/hypergeometric.html#appellf3)
+you can find the docs of $$F_3$$ in the mpmath Python library,
+and below is an implementation of $$p_n(\Delta)$$ making use of it:
 
+```python
+from mpmath import beta, mp, appellf3
+mp.dps = 25
+
+def delta_cdf(delta, alpha_a, beta_a, alpha_b, beta_b):
+    if delta < -1 or delta > 1:
+        return None
+    
+    if abs(delta) < 1e-15:
+        f3 = 1
+        num = beta(alpha_b + alpha_a - 1, beta_b + beta_a - 1)
+    elif delta > 0:
+        f3 = appellf3(alpha_a, beta_b, 1 - beta_a, 1 - alpha_b,
+                      alpha_a + beta_b, 1 - delta, 1 - delta)
+        num = beta(alpha_a, beta_b) * pow(1 - delta, alpha_a + beta_b - 1)
+    else:
+        f3 = appellf3(alpha_b, beta_a, 1 - beta_b, 1 - alpha_a,
+                      alpha_b + beta_a, 1 + delta, 1 + delta)
+        num = beta(alpha_b, beta_a) * pow(1 + delta, alpha_b + beta_a - 1) 
+    
+    den = beta(alpha_b, beta_b) * beta(alpha_a, beta_a)
+    return float(f3) * float(num) / float(den)
+```
+
+<!-- I discovered
+[here](https://stackoverflow.com/a/42987104/6152355)
+a piece of code from
+[this](https://sites.google.com/site/doingbayesiandataanalysis/software-installation)
+book to compute the HDRs for single mode distributions (our case)
+given a quantile function (the inverse of the CDF) and $$c$$,
+the probability accumulated by the credible interval.
+The CDF of $$\Delta$$
+(remark the support of $$\Delta$$ is $$(-1,1)$$)
+is
+
+$$
+\Delta \mapsto \int_{-1}^\Delta p_n(t) dt
+$$
+
+and since we know it's non-decreasing
+we can easily compute its
+[inverse](https://en.wikipedia.org/wiki/Inverse_function#Two-sided_inverses)
+on-demand via standard root-finding numerical methods,
+like Newton's. Here's some [R code](https://stackoverflow.com/a/10081571/6152355) to do that: -->
+
+<!-- 
+```r
+delta_pdf = function(d, alpha_a, beta_a, alpha_b, beta_b) {
+  integrate(
+    function(t) dbeta(d + t, alpha_b, beta_b) * dbeta(t, alpha_a, beta_a),
+    lower = 0,
+    upper = 1
+  )$value
+}
+
+delta_cdf = function(d, alpha_a, beta_a, alpha_b, beta_b) {
+  integrate(
+    Vectorize(delta_pdf),
+    lower = -1,
+    upper = d,
+    alpha_a = alpha_a,
+    beta_a  = beta_a,
+    alpha_b = alpha_b,
+    beta_b  = beta_b
+  )$value
+}
+
+delta_icdf = function(p, alpha_a, beta_a, alpha_b, beta_b) {
+  uniroot(
+    function(d) p - delta_cdf(d, alpha_a, beta_a, alpha_b, beta_b),
+    interval = c(-1, 1)
+  )$root
+}
+```
+ -->
+
+**Measuring the quality of stopping rules.**
 In the simulations, I record the most up-to-date values of
 the hyper-parameters (`universe` counts the 100
 replications and `b_is_better` is $$P(\Delta > 0)$$):
@@ -494,82 +597,4 @@ replications and `b_is_better` is $$P(\Delta > 0)$$):
 10     0.1     0.1        1       10       0.879       1      5       4      4
 # … with 8,999,990 more rows
 ```
-
-I discovered
-[here](https://stackoverflow.com/a/42987104/6152355)
-a piece of code from
-[this](https://sites.google.com/site/doingbayesiandataanalysis/software-installation)
-book to compute the HDRs for single mode distributions (our case)
-given a quantile function (the inverse of the CDF) and $$\alpha$$,
-the probability of the credible interval.
-The CDF of $$\Delta$$
-(remark the support of $$\Delta$$ is $$(-1,1)$$)
-is
-
-$$
-\Delta \mapsto \int_{-1}^\Delta p_n(t) dt
-$$
-
-and since we know it's monotonically non-decreasing
-we can easily compute its
-[inverse](https://stackoverflow.com/a/10081571/6152355)
-on-demand via standard root-finding numerical methods,
-like Newton's. Here's some R code to do that:
-
-```r
-delta_pdf = function(d, alpha_a, beta_a, alpha_b, beta_b) {
-  integrate(function(theta) {
-    dbeta(d + theta, alpha_b, beta_b) * dbeta(theta, alpha_a, beta_a)
-  }, lower = 0, upper = 1)$value
-}
-
-delta_cdf = function(d, alpha_a, beta_a, alpha_b, beta_b) {
-  integrate(Vectorize(delta_pdf), lower = -1, upper = d,
-            alpha_a = alpha_a, beta_a = beta_a,
-            alpha_b = alpha_b, beta_b = beta_b)$value
-}
-
-delta_icdf = function(p, alpha_a, beta_a, alpha_b, beta_b) {
-  uniroot(function(d) delta_cdf(d, alpha_a, beta_a, alpha_b, beta_b) - p,
-          interval = c(-1, 1))$root
-}
-```
-
-## The impact of better priors
-
-
-
-## More realistic scenarios
-
-[This](https://medium.com/pinterest-engineering/trapped-in-the-present-how-engagement-bias-in-short-run-experiments-can-blind-you-to-long-run-58b55ad3bda0)
-post on the Pinterest engineering blog
-hightlight a very important issue they call "engagement bias"
-
-> [...] engagement bias: your treatment doesn’t have the
-same effect on unengaged users as it does on engaged users,
-but the engaged users are the ones who show up first and
-therefore dominate the early experiment results.
-If you trust the short-term results without accounting for and
-trying to mitigate this bias, you risk being trapped in the present:
-building a product for the users you’ve already activated
-instead of the users you want to activate in the future.
-
-That's specially undesirable in case you're targeting new users.
-How can we take it into account?
-
-The boring solution is just to wait longer so that we can be more confident.
-But we have no time for that, we've got many other theories to test.
-I'm interested in how we may be able to catch such
-behavior early on in the experiment.
-Let's accomodate the possibility of engagement bias into
-our knowledge model so that we're not fooled by it.
-What we are about to do is called
-[hierarchical modeling](https://en.wikipedia.org/wiki/Bayesian_hierarchical_modeling).
-
-The idea is to 
-
-
-
-
-
 
