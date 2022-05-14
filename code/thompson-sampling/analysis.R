@@ -1,6 +1,6 @@
 library(tidyverse)
 
-dat = data.table::fread("~/thompson-sampling/thompson-scenarios.csv") %>%
+dat = data.table::fread("thompson-scenarios.csv") %>%
   as_tibble() %>%
   mutate(lift_rel = factor(lift_rel, levels = c("0%", "10%", "100%"), ordered = T),
          theta_a_str = factor(

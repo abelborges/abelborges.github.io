@@ -2,28 +2,24 @@
 layout: post
 title: "Introduction to online experiments with Thompson Sampling"
 excerpt: >
-  We're going to release a new feature in a product.
-  It consists of a modified version B of a currently functional component A.
-  Version B is technically OK but we want to check whether users prefer it over A
+  You're going to release a new feature in a product.
+  It consists of a modified version B of an existing component A.
+  Version B is technically OK but you want to check whether users prefer it over A
   and, if so, gradually point new requests to it.
   This post is about a solution to this problem.
 ---
 
 <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
 
-We're going to release a new feature in a web application.
-It consists of a modified version B of a currently functional component A.
-Version B is technically OK, just as A,
-but we want to discover which one users prefer
-and direct requests accordingly.
+You're going to release a new feature in a web application.
+It consists of a modified version B of an existing component A.
+Version B is technically OK but you want to check whether users prefer it over A
+and, if so, gradually point new requests to it.
 This post is about a solution to this problem.
 
-One way to check that is by carrying an A/B test.
-For a frequentist-type methodology for testing, you may
-check [this]({{site.baseurl}}/hypothesis-testing).
-Here I want to talk about a Bayesian approach to update
-our impressions on A and B in an online fashion
-known as Thompson Sampling.
+One way to check that is by carrying an [A/B test]({{site.baseurl}}/hypothesis-testing).
+I want to talk about Thompson Sampling, a Bayesian approach to evolve
+our impressions on A and B in an online fashion.
 
 ## Bayesian inference
 
@@ -35,26 +31,22 @@ that takes values from a set $$\Theta$$ (of, say, real vectors).
 The function $$\theta \mapsto p(x \mid \theta)$$
 is called the **likelihood** of $$\theta$$.
 It's just another name for the density/probability mass of $$x$$
-now seen as a function of $$\theta$$, given a
-particular data point $$x$$.
+seen as a function of $$\theta$$, given an observation $$x$$ of $$X$$.
 
 In this setup, inferences about the behavior of $$X$$
-(issues like which values are most likely to occur,
-how frequently the values lie on a given interval, and so on)
+(e.g. which values are most likely to occur,
+how frequently the values lie on a given interval etc)
 can be translated into inferences about $$\theta$$,
-which we assume to be a constant that we don't know for sure.
+a constant whose value we don't know for sure.
 
 Simply put, the Bayesian approach for inference is
 
-1. To model our prior perceptions and uncertainties
-of what the value of $$\theta$$ may be with a probability
-distribution, say $$p(\theta)$$, known as the
-**prior** distribution;
-1. And, then, once we observe data $$x$$ from $$X$$, use the
+1. To model our prior perceptions of what the value of
+$$\theta$$ may be with a probability distribution,
+say $$p(\theta)$$, known as the **prior**;
+1. Then, once we have data, use the
 [Bayes' theorem](https://en.wikipedia.org/wiki/Bayes%27_theorem)
-to deduce the **posterior**
-distribution of $$\theta$$ given this piece of evidence,
-namely
+to deduce the **posterior** distribution of $$\theta$$, namely
 
 $$
 p(\theta \mid x)
@@ -118,8 +110,7 @@ we want version B to be preferred over A, and vice-versa.
 As time goes by and we observe user outcomes,
 we gather more and more information on these parameters.
 
-Following the Bayesian approach,
-let's denote by $$p_{n,A}(\theta)$$ and $$p_{n,B}(\theta)$$
+Let's denote by $$p_{n,A}(\theta)$$ and $$p_{n,B}(\theta)$$
 the distributions containing our knowledge on
 $$\theta_A$$ and $$\theta_B$$
 after we've learned from the experience of
@@ -161,17 +152,18 @@ $$
 
 That means we believe that pretty much anything
 can happen in both scenarios.
-There may be better choices, but let's move on for now.
+In practice, we may be more conservative and assign
+a higher probability for A at the beginning.
+But let's move on for now.
 
-This way, at the beginning,
-$$P(\theta_B > \theta_A) = 0.5$$ and A and B
-are equally likely to be chosen.
+This way, we start with $$P(\theta_B > \theta_A) = 0.5$$,
+thus A and B are equally likely to be chosen.
 
 Let's say that we saw the experience of the first
-$$n = n_A + n_B$$ users, with
+$$n = n_A + n_B$$ users, where
 $$n_A$$ of them happened to be exposed to A,
 with $$s_A$$ positive outcomes, or successes;
-same thing for B, with $$n_B$$ and $$s_B$$.
+same thing for B with $$n_B$$ and $$s_B$$.
 
 **The posterior.**
 For each group, these results can be seen as
@@ -237,7 +229,7 @@ As you may already know, the Uniform is a special case
 of the Beta distribution when $$\alpha = \beta = 1$$.
 That is: both the prior and the posterior for $$\theta$$
 are Beta distributions under the Binomial likelihood
-in which $$\theta$$ is the probability of a positive outcome.
+with $$\theta$$ being the probability of a positive outcome.
 In that case, we say that the Beta distribution is a
 [conjugate prior](https://en.wikipedia.org/wiki/Conjugate_prior)
 for the Binomial likelihood: when we "Bayes-update" it with new data,
@@ -261,7 +253,7 @@ p_{n+m,A}(\theta \mid s_A, n_A, t_A, m_A)
 &= \theta^{s_A + t_A} (1-\theta)^{(n_A + m_A) - (s_A + t_A)}.
 \end{align}$$
 
-Now we know that this is just a Beta distribution with parameters
+We know that this is just a Beta distribution with parameters
 $$\alpha_A = s_A + t_A + 1$$ and $$\beta_A = (n_A + m_A) - (s_A + t_A) + 1$$.
 Note that the mechanics of the formulae for two updates
 is equivalent to performing a single update
@@ -285,10 +277,11 @@ if we start at the Uniform), is $$(\alpha-1)/(\alpha+\beta-2)$$.
 Note that after the first tens of users,
 both the mean and the mode become very close to the
 proportion of positive outcomes observed so far.
+Easy to reason about.
 
-**Randomization rule.** Finally, one can
-[show](https://www.evanmiller.org/bayesian-ab-testing.html#binary_ab_derivation)
-that, four this Beta case,
+**Randomization rule.** Finally,
+[one can show](https://www.evanmiller.org/bayesian-ab-testing.html#binary_ab_derivation)
+that, for the Beta case,
 
 $$
 P(\theta_B > \theta_A) =
@@ -300,8 +293,8 @@ That makes sense because the hyper-parameters are integers
 (at least one of the pairs $$\alpha, \beta$$ must be,
 see why [here](https://stats.stackexchange.com/a/25297)).
 In general, you can always use numerical integration.
-Here is an example function in R using the instance
-of $$P(\theta_B > \theta_A)$$ introduced before for Beta distributions:
+Here is an example function in R using the expression
+for $$P(\theta_B > \theta_A)$$ introduced before for Beta distributions:
 
 ```r
 prob_B_is_better = function(alpha_a, beta_a, alpha_b, beta_b) {
@@ -324,9 +317,7 @@ hypothetical scenarios as we want.
 The code to reproduce the analysis in this section is available
 [here](https://github.com/abelborges/abelborges.github.io/tree/master/code/thompson-sampling).
 
-**Questions of interest.**
-We're going to focus on the following related questions
-of practical relevance:
+<!-- We're going to focus on the following question of practical relevance:
 
 1. When to stop the experiment?
 1. How to provide an estimate of
@@ -335,6 +326,11 @@ the "lift" $$\Delta = \theta_B - \theta_A$$?
 They are related because intuition suggests
 that we should stop as soon as there is "enough evidence"
 in favor of $$\Delta$$ being different than zero.
+ -->
+
+**How to estimate $$\Delta = \theta_B - \theta_A$$?**
+The answer to this question easily translates into
+rules for when to stop the experiment.
 
 The knowledge distributions for $$\theta_A$$
 and $$\theta_B$$ imply a knowledge distribution
@@ -363,33 +359,35 @@ The ETI equals the HDR in case the distribution is
 symmetric and unimodal.
 For skewed distributions, as is our case,
 the ETI may let values near the mode out of the interval
-while including values with lower associated density,
+while including values with lower probability density,
 and I want to avoid that property.
 The HDR certainly contains the mode,
 which is unique and very close to the mean in our case,
 so I'm going to use it.
 
-In any case, the answers for questions 1 and 2
-can be merged into a single stopping rule like
+Given a credibility level $$c$$,
+examples of stopping rules based on $$$\Delta$ include:
 
 1. Stop as soon as the credible interval for $$\Delta$$
-doesn't contain 0, given a high-enough credibility level;
+doesn't contain 0;
 1. Stop as soon as the width ("margin of error", if you like)
 of the credible interval
 for $$\Delta$$ becomes less than a threshold;
 1. Stop as soon as the probability of $$\Delta$$
 changing sign at some future moment becomes low enough.
 
-I confess I don't know whether this third stopping rule is
+I don't know whether the third option is
 used in practice, but I find it the most compelling one.
-However, I don't know how to compute it here.
+However, it does not seem easy to compute, and requires
+some hypotheses about the underlying phenomenon
 Maybe we get back to that another time.
-It's simpler to choose from the first two,
+Let's go with the first one.
+<!-- It's simpler to choose from the first two,
 or some combination of them.
+ -->
 
-The scenarios we may face can be defined essentially
-in terms of $$\theta$$.
-Here I consider two dimensions:
+The scenarios we may face can be defined in terms of $$\theta$$.
+I consider two dimensions:
 
 - The baseline rate of positive outcomes $$\theta_A$$
   being 1%, 5% or 10%; and
@@ -398,7 +396,7 @@ Here I consider two dimensions:
 
 which amounts to 9 scenarios.
 
-**Now to the simulation.**
+**The simulation algorithm.**
 The goal here is to get a basic understanding of how
 
 $$P(\Delta > 0) = P(\theta_B > \theta_A)$$
@@ -410,7 +408,7 @@ for user outcomes and the algorithm
 we devised in the previous section put together
 look like the following.
 
-First, we set the "true" values of $$\theta_A$$
+First, set the "true" values of $$\theta_A$$
 and $$\theta_B$$.
 We start with uniform priors, i.e.
 $$\alpha_A = \beta_A = \alpha_B = \beta_B = 1$$.
@@ -427,7 +425,7 @@ Then, for each new user $$n \geq 1$$:
    depending on whether the experience was
    positive or negative, respectively.
 
-Notice that I'm updating the distributions
+I'm updating the distributions
 right after observing the outcome
 of each user. In practice, that may not
 be feasible. Updates could be executed
@@ -436,32 +434,32 @@ after summarizing results from batches of users.
 I've used a total of 10K users and repeated this whole
 process 100 times, resulting in 1M simulated user experiences
 for each scenario.
-Now, we can visualize, say,
+With the result, let's look at
 the average (dense line) + 80% ETI (shadows)
 of the $$P(\Delta > 0)$$
-values across the 100 histories as a function
+values across the 100 "histories" as a function
 of the number of users, $$n$$,
 for each scenario.
 
 ![]({{site.baseurl}}/images/thompson-sampling/simple-scenarios.png)
 
+- Under no lift (in grey), $$P(\theta_B > \theta_A)$$
+drifts up and down with no signs of convergence, which makes sense.
+Notice the wide confidence intervals irrespectively of
+$$\theta_A$$ and $$n$$;
 - As expected, the greater the lift the easier to catch
-the difference sooner;
+the difference (if any) sooner;
 - For a given relative lift, it's easier to
-detect an existing difference if the rates
-are bigger. That's just because the absolute value
-of the lift is also bigger in such cases.
+detect an existing difference if the $$\theta_A$$ is bigger.
+But that's just because the absolute value
+of the lift is also bigger in such case.
 For instance, both the green
 curve in the first pane and
 the blue curve in the third pane correspond to $$\Delta = 0.01$$.
-- Under no lift, also as expected,
-it looks like the $$P(\theta_B > \theta_A)$$
-time series may drift up and down with no signs of convergence.
-Notice the wide confidence intervals irrespectively of $$\theta_A$$ and $$n$$.
 
 Amusingly, this is a
 [frequentist](https://en.wikipedia.org/wiki/Probability_interpretations#Frequentism)
-analysis of subjective probabilities.
+analysis of subjective ("bayesian") probabilities.
 <!-- Note that these are not bayesian estimates. -->
 The uncertainty measured by these intervals
 are with respect to the
@@ -474,7 +472,7 @@ I wanted to assess in a simple manner how my
 perception of the reality at a certain point
 in time may deviate from the actual
 underlying reality itself.
-In other words, I don't want to be fooled by randomness.
+<!-- In other words, I don't want to be fooled by randomness. -->
 In practice, the knowledge distribution for $$\Delta$$
 is the only thing we have to
 measure uncertainty and make decisions accordingly.
@@ -482,8 +480,9 @@ measure uncertainty and make decisions accordingly.
 **A closer look into the distribution of $$\Delta$$**.
 We want to deduce HDRs for $$\Delta$$,
 use them to decide when to stop and then measure the
-quality of such decisions.
-Since $$\Delta = \theta_B - \theta_A$$, we have
+quality of such decisions under our simple model,
+in which $$\theta_A$$ and $$\theta_B$$ are constants.
+Since $$\Delta = \theta_B - \theta_A$$,
 
 $$\begin{align}
 p_n(\Delta)
