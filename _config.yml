@@ -1,7 +1,7 @@
 author: Abel Borges
 title: Data interlude
 email: brgs.abel@gmail.com
-description: Technical notes on data-related issues and concepts.
+description: Personal collection of thoughts on data analysis
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "abelborges.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 github_username: abelborges
