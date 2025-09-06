@@ -4,19 +4,15 @@ title: About
 permalink: /about/
 ---
 
-Welcome! I’m Abel. I like to think I'm a data inquirer.
+Welcome! I’m Abel.
 
-This is a personal collection of amusements
-and thoughts on statistics and data science.
+This is a personal collection of thoughts on data analysis.
 
-Exploring the limits of what can be
-known from available data and
-providing means for people to reliably
-act on it is what motivates me.
+Exploring the limits of what can be known from data
+and providing means for people to reliably act on it
+is the kind of work I'm interested in.
 
-I currently work on these issues at
-[In Loco](https://inloco.com.br).
+I currently work on these issues at Nubank.
 
-Feel free to contact me using the links
-at the bottom.
+Feel free to contact me using the links at the bottom.
 
