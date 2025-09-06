@@ -4,7 +4,6 @@ email: brgs.abel@gmail.com
 description: Technical notes on data-related issues and concepts.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "abelborges.github.io" # the base hostname & protocol for your site, e.g. http://example.com
-twitter_username: abelb0rges
 github_username: abelborges
 
 # Build settings
